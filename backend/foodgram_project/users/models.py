@@ -3,7 +3,7 @@ from django.db import models, transaction
 
 
 class UserManager(BaseUserManager):
-    "Мэнеджер кастомной модели пользователя."
+    "Менеджер кастомной модели пользователя."
     def _create_user(self, email, password, **extra_fields):
         if not email:
             raise ValueError('Нужно предоставить email!')
@@ -29,12 +29,7 @@ class UserManager(BaseUserManager):
 
 class CustomUser(AbstractUser):
     "Кастомная модель пользователя."
-    username = models.SlugField(max_length=150)
-    password = models.CharField(max_length=150)
-    email = models.EmailField(max_length=254, unique=True)
-    first_name = models.CharField(max_length=150)
-    last_name = models.CharField(max_length=150)
-    is_subscribed = models.BooleanField
+    is_subscribed = models.BooleanField(null=True)
 
     objects = UserManager()
 
@@ -49,6 +44,14 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return str(self.username)
+    
+CustomUser._meta.get_field('username').max_length = 150
+CustomUser._meta.get_field('email').max_length = 254
+CustomUser._meta.get_field('email')._unique = True
+CustomUser._meta.get_field('password').max_length = 150
+CustomUser._meta.get_field('first_name').max_length = 150
+CustomUser._meta.get_field('last_name').max_length = 150
+
     
 
 class Follow(models.Model):
@@ -66,3 +69,6 @@ class Follow(models.Model):
 
     class Meta:
         verbose_name = 'Подписки'
+
+    def __str__(self):
+        return f'{self.user} follows {self.author}'

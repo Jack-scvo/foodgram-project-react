@@ -51,8 +51,8 @@ class Recipe(models.Model):
     )
     tags = models.ManyToManyField(Tag, through='TagsOnRecipe')
     ingredients = models.ManyToManyField(Ingredient, through='IngredientsPerRecipe')
-    is_favorited = models.BooleanField('Есть в избранном')
-    is_in_shopping_cart = models.BooleanField('Есть в корзине')
+    is_favorited = models.BooleanField('Есть в избранном', null=True)
+    is_in_shopping_cart = models.BooleanField('Есть в корзине', null=True)
 
     class Meta:
         ordering = ('name', )
@@ -63,8 +63,12 @@ class Recipe(models.Model):
 
 class IngredientsPerRecipe(models.Model):
     """Модель, релизующая связь многие-ко-многим Ингредиентов и Рецептов."""
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.SET_NULL, null=True)
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE
+    )
+    ingredient = models.ForeignKey(
+        Ingredient, on_delete=models.SET_NULL, null=True, related_name='per_recipe'
+    )
     amount = models.PositiveIntegerField('Количество в рецепте')
 
     def __str__(self):
@@ -82,6 +86,15 @@ class TagsOnRecipe(models.Model):
 
 class Favorite(models.Model):
     """Модель, хранящая данные об избранном."""
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.recipe} - {self.user}'
+    
+
+class ShoppingCart(models.Model):
+    """Модель, хранящая данные о списке покупок."""
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
