@@ -16,6 +16,6 @@ urlpatterns = [
          FollowViewSet.as_view({'post': 'create', 'delete': 'destroy'}),
          name='subscribe'),
     path('', include(router.urls)),
-    path('token/login/', obtain_token, name='obtain_token'),
-    path('token/logout/', revoke_token, name='revoke_token'),
+    path('auth/token/login/', obtain_token, name='obtain_token'),
+    path('auth/token/logout/', revoke_token, name='revoke_token'),
 ]
