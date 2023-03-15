@@ -8,11 +8,11 @@ from recipes.models import Ingredient
 class Command(BaseCommand):
     def handle(self, *args, **options):
         csv_file = open(
-            f'{settings.BASE_DIR}/data/ingredients.csv', encoding="utf8"
+            f'{settings.BASE_DIR}/../../data/ingredients.csv', encoding="utf8"
         )
-        data_reader = csv.DictReader(csv_file, delimiter=',')
+        data_reader = csv.reader(csv_file, delimiter=',')
         items = []
         for row in data_reader:
-            item = model(**row)
+            item = Ingredient(name=row[0], measurement_unit=row[1])
             items.append(item)
         Ingredient.objects.bulk_create(items)

@@ -17,7 +17,7 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.name
-    
+
 
 class Ingredient(models.Model):
     """Модель, хранящая данные об ингредиентах."""
@@ -29,7 +29,7 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return self.name
-    
+
 
 class Recipe(models.Model):
     """Модель, хранящая данные о рецептах."""
@@ -43,23 +43,29 @@ class Recipe(models.Model):
     image = models.ImageField(
         'Картинка',
         upload_to='images'
-        )
+    )
     cooking_time = models.PositiveIntegerField(
         'Время готовки', validators=[
-        MinValueValidator(MIN_VALUE_SCORE),
+            MinValueValidator(MIN_VALUE_SCORE),
         ]
     )
     tags = models.ManyToManyField(Tag, through='TagsOnRecipe')
-    ingredients = models.ManyToManyField(Ingredient, through='IngredientsPerRecipe')
+    ingredients = models.ManyToManyField(
+        Ingredient, through='IngredientsPerRecipe'
+    )
     is_favorited = models.BooleanField('Есть в избранном', null=True)
     is_in_shopping_cart = models.BooleanField('Есть в корзине', null=True)
+    pub_date = models.DateTimeField(
+        'Дата публикации рецепта',
+        auto_now_add=True,
+    )
 
     class Meta:
-        ordering = ('name', )
+        ordering = ('-pub_date', )
 
     def __str__(self):
         return self.name
-    
+
 
 class IngredientsPerRecipe(models.Model):
     """Модель, релизующая связь многие-ко-многим Ингредиентов и Рецептов."""
@@ -67,7 +73,8 @@ class IngredientsPerRecipe(models.Model):
         Recipe, on_delete=models.CASCADE
     )
     ingredient = models.ForeignKey(
-        Ingredient, on_delete=models.SET_NULL, null=True, related_name='per_recipe'
+        Ingredient, on_delete=models.SET_NULL, null=True,
+        related_name='per_recipe'
     )
     amount = models.PositiveIntegerField('Количество в рецепте')
 
@@ -82,7 +89,7 @@ class TagsOnRecipe(models.Model):
 
     def __str__(self):
         return f'{self.recipe} - {self.tag}'
-    
+
 
 class Favorite(models.Model):
     """Модель, хранящая данные об избранном."""
@@ -91,7 +98,7 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f'{self.recipe} - {self.user}'
-    
+
 
 class ShoppingCart(models.Model):
     """Модель, хранящая данные о списке покупок."""

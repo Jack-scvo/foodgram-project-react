@@ -44,7 +44,8 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return str(self.username)
-    
+
+
 CustomUser._meta.get_field('username').max_length = 150
 CustomUser._meta.get_field('email').max_length = 254
 CustomUser._meta.get_field('email')._unique = True
@@ -52,7 +53,6 @@ CustomUser._meta.get_field('password').max_length = 150
 CustomUser._meta.get_field('first_name').max_length = 150
 CustomUser._meta.get_field('last_name').max_length = 150
 
-    
 
 class Follow(models.Model):
     """Хранит данные о подписках."""
