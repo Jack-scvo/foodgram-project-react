@@ -1,3 +1,4 @@
+from api.common import Base64ImageField
 from recipes.models import Recipe
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -15,15 +16,12 @@ class AuthorSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def get_is_subscribed(self, obj):
-        try:
+        if self.context['request_user']:
             user = self.context['request_user']
-        except:
+        else:
             return False
         if obj != user:
-            try:
-                return Follow.objects.filter(user=user, author=obj).exists()
-            except:
-                return False
+            return Follow.objects.filter(user=user, author=obj).exists()
         else:
             return False
 
@@ -69,16 +67,15 @@ class LimitListSerializer(serializers.ListSerializer):
 
     def to_representation(self, data):
         data = super().to_representation(data)
-        try:
+        if self.context.get('recipes_limit'):
             limit = int(self.context.get('recipes_limit'))
             data = data[:limit]
-        except Exception as err:
-            print(f'{err}')
-        return super().to_representation(data)
+        return data
 
 
 class SimpleRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор рецепта для подписок, избранного и корзины."""
+    image = Base64ImageField()
 
     class Meta:
         fields = ('id', 'name', 'image', 'cooking_time')
@@ -113,20 +110,14 @@ class FollowSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         user = self.context['request_user']
         if obj != user:
-            try:
-                return Follow.objects.filter(user=user, author=obj).exists()
-            except:
-                return False
+            return Follow.objects.filter(user=user, author=obj).exists()
         else:
             return False
 
     def save(self, **kwargs):
         user_id = kwargs.get('user_id')
         self.instance = CustomUser.objects.get(id=user_id)
-        try:
-            Follow.objects.get_or_create(
-                author_id=user_id, user=self.context['request_user']
-            )
-        except:
-            print('Oups')
+        Follow.objects.get_or_create(
+            author_id=user_id, user=self.context['request_user']
+        )
         return self.instance

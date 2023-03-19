@@ -1,19 +1,9 @@
-import base64
-
-from django.core.files.base import ContentFile
 from recipes.models import (Favorite, Ingredient, IngredientsPerRecipe, Recipe,
                             ShoppingCart, Tag)
 from rest_framework import serializers
 from users.serializers import AuthorSerializer
 
-
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-        return super().to_internal_value(data)
+from .common import Base64ImageField
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -26,43 +16,13 @@ class IngredientSerializer(serializers.ModelSerializer):
         read_only_fields = ('name', 'measurement_unit')
         model = Ingredient
 
-    def create(self, validated_data):
-        ins = []
-        amount = self.initial_data['amount']
-        IngredientsPerRecipe.objects.filter(
-            recipe_id=self.context.get('recipe_id'),
-            ingredient_id=self.initial_data['id']
-        ).delete()
-        instance = IngredientsPerRecipe.objects.create(
-            recipe_id=self.context.get('recipe_id'),
-            ingredient_id=self.initial_data['id'], amount=amount
-        )
-        ins.append(instance)
-        return ins
-
-    def update(self, instance, validated_data):
-        ins = []
-        item = self.initial_data
-        amount = item['amount']
-        IngredientsPerRecipe.objects.filter(
-            recipe_id=self.context.get('recipe_id'), ingredient_id=item['id']
-        ).delete()
-        instance = IngredientsPerRecipe.objects.create(
-            recipe_id=self.context.get('recipe_id'),
-            ingredient_id=item['id'], amount=amount
-        )
-        ins.append(instance)
-        return ins
-
     def to_representation(self, value):
         ret = super().to_representation(value)
-        try:
+        if self.context.get('recipe_id'):
             amount = IngredientsPerRecipe.objects.get(
                 ingredient_id=value.id, recipe_id=self.context.get('recipe_id')
             ).amount
             ret['amount'] = self.fields['amount'].to_representation(amount)
-        except:
-            print("No amount")
         return ret
 
 
@@ -95,12 +55,12 @@ class RecipeGetSerializer(serializers.ModelSerializer):
 
     def get_is_favorited(self, obj):
         return Favorite.objects.filter(
-            recipe_id=obj.id, user=obj.author
+            recipe_id=obj.id, user=self.context['request_user']
         ).exists()
 
     def get_is_in_shopping_cart(self, obj):
         return ShoppingCart.objects.filter(
-            recipe_id=obj.id, user=obj.author
+            recipe_id=obj.id, user=self.context['request_user']
         ).exists()
 
     def to_representation(self, value):
@@ -146,25 +106,37 @@ class RecipePostSerializer(serializers.ModelSerializer):
         )
         instance.tags.set(validated_data.get('tags', instance.tags))
         ing_data = self.initial_data.get('ingredients', instance.ingredients)
+        ing_list = []
+        # здесь все-таки нужен delete,
+        # иначе мешанина из ингредиентов получается
+        IngredientsPerRecipe.objects.filter(
+            recipe_id=instance.id,
+        ).delete()
         for data in ing_data:
-            serializer = IngredientSerializer(
-                data=data, context={'recipe_id': self.data.get('id')}
+            ing_per_recipe = IngredientsPerRecipe(
+                recipe_id=instance.id,
+                ingredient_id=data['id'],
+                amount=data['amount']
             )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
+            ing_list.append(ing_per_recipe)
+        IngredientsPerRecipe.objects.bulk_create(ing_list)
         instance.save()
         return instance
 
     def create(self, validated_data):
         tags_data = validated_data.pop('tags')
+        validated_data.pop('ingredients')
         ing_data = self.initial_data.get('ingredients')
         recipe = Recipe.objects.create(**validated_data)
+        ing_list = []
         for data in ing_data:
-            serializer = IngredientSerializer(
-                data=data, context={'recipe_id': recipe.id}
+            ing_per_recipe = IngredientsPerRecipe(
+                recipe_id=recipe.id,
+                ingredient_id=data['id'],
+                amount=data['amount']
             )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
+            ing_list.append(ing_per_recipe)
+        IngredientsPerRecipe.objects.bulk_create(ing_list)
         recipe.tags.set(tags_data)
         return recipe
 

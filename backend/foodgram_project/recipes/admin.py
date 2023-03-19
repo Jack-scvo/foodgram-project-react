@@ -9,6 +9,11 @@ admin.site.register(TagsOnRecipe)
 admin.site.register(ShoppingCart)
 
 
+class RecipeIngredientInline(admin.TabularInline):
+    model = IngredientsPerRecipe
+    min_num = 1
+
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
@@ -17,6 +22,7 @@ class RecipeAdmin(admin.ModelAdmin):
     readonly_fields = ('fav_count',)
     list_filter = ('name', 'author', 'tags')
     empty_value_display = '-пусто-'
+    inlines = (RecipeIngredientInline, )
 
     def fav_count(self, obj):
         return f'{Favorite.objects.filter(recipe_id=obj.id).count()}'

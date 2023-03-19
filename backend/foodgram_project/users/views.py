@@ -3,7 +3,7 @@ from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.token_blacklist.models import (BlacklistedToken,
@@ -94,11 +94,15 @@ def revoke_token(request):
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class LimitPageNumberPagination(PageNumberPagination):
+    page_size_query_param = 'limit'
+
+
 class FollowViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin,
                     mixins.ListModelMixin, viewsets.GenericViewSet):
     """Вьюсет для Подписок."""
     serializer_class = FollowSerializer
-    pagination_class = LimitOffsetPagination
+    pagination_class = LimitPageNumberPagination
 
     def get_queryset(self):
         qs = self.request.user.follower.values_list('author_id', flat=True)

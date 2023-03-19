@@ -3,10 +3,11 @@ from recipes.models import (Favorite, Ingredient, IngredientsPerRecipe, Recipe,
                             ShoppingCart, Tag)
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import api_view
-from rest_framework.permissions import (IsAuthenticated,
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from users.serializers import SimpleRecipeSerializer
+from users.views import LimitPageNumberPagination
 
 from .permissions import IsAdminOrOwner
 from .serializers import (IngredientSerializer, RecipeGetSerializer,
@@ -17,6 +18,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     """Вьюсет для модели Recipe."""
     queryset = Recipe.objects.all()
     permission_classes = [IsAuthenticatedOrReadOnly, ]
+    pagination_class = LimitPageNumberPagination
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -28,12 +30,36 @@ class RecipeViewSet(viewsets.ModelViewSet):
         context['request_user'] = self.request.user
         context.update(self.kwargs)
         context['detail'] = self.detail
+        context.update(self.request.query_params)
         return context
 
     def get_permissions(self):
         if self.action in ['update', 'destroy']:
             return [IsAuthenticated, IsAdminOrOwner]
         return super().get_permissions()
+
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            if self.request.query_params.get('is_in_shopping_cart'):
+                qs = ShoppingCart.objects.filter(
+                    user=self.request.user
+                ).values_list('recipe_id', flat=True)
+                queryset = Recipe.objects.filter(id__in=qs)
+            elif self.request.query_params.get('is_favorited'):
+                qs = Favorite.objects.filter(
+                    user=self.request.user
+                ).values_list('recipe_id', flat=True)
+                queryset = Recipe.objects.filter(id__in=qs)
+            else:
+                queryset = Recipe.objects.all()
+        else:
+            queryset = Recipe.objects.all()
+        if self.request.query_params.get('tags'):
+            tags = []
+            tags = self.request.query_params.getlist('tags')
+            for tag in tags:
+                queryset = queryset.filter(tags__slug__contains=tag)
+        return queryset
 
 
 class TagViewSet(
@@ -42,6 +68,7 @@ class TagViewSet(
     """Вьюсет для модели Tag."""
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    permission_classes = [AllowAny, ]
 
 
 class IngredientViewSet(
@@ -52,6 +79,7 @@ class IngredientViewSet(
     serializer_class = IngredientSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('^name', )
+    permission_classes = [AllowAny, ]
 
 
 class FavoriteViewSet(

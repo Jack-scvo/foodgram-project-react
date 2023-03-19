@@ -1,9 +1,10 @@
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 User = get_user_model()
-MIN_VALUE_SCORE = 1
+MIN_VALUE = 1
+MAX_VALUE = 10000
 
 
 class Tag(models.Model):
@@ -46,7 +47,8 @@ class Recipe(models.Model):
     )
     cooking_time = models.PositiveIntegerField(
         'Время готовки', validators=[
-            MinValueValidator(MIN_VALUE_SCORE),
+            MinValueValidator(MIN_VALUE),
+            MaxValueValidator(MAX_VALUE)
         ]
     )
     tags = models.ManyToManyField(Tag, through='TagsOnRecipe')
@@ -76,7 +78,14 @@ class IngredientsPerRecipe(models.Model):
         Ingredient, on_delete=models.SET_NULL, null=True,
         related_name='per_recipe'
     )
-    amount = models.PositiveIntegerField('Количество в рецепте')
+    amount = models.PositiveIntegerField('Количество в рецепте',
+                                         validators=[
+                                             MinValueValidator(MIN_VALUE),
+                                             MaxValueValidator(MAX_VALUE)
+                                         ])
+
+    class Meta:
+        ordering = ('recipe', 'ingredient', )
 
     def __str__(self):
         return f'{self.recipe} - {self.ingredient}'
@@ -87,6 +96,9 @@ class TagsOnRecipe(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True)
 
+    class Meta:
+        ordering = ('recipe', 'tag', )
+
     def __str__(self):
         return f'{self.recipe} - {self.tag}'
 
@@ -96,6 +108,9 @@ class Favorite(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    class Meta:
+        ordering = ('user', 'recipe', )
+
     def __str__(self):
         return f'{self.recipe} - {self.user}'
 
@@ -104,6 +119,9 @@ class ShoppingCart(models.Model):
     """Модель, хранящая данные о списке покупок."""
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ('user', 'recipe', )
 
     def __str__(self):
         return f'{self.recipe} - {self.user}'
