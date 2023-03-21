@@ -1,5 +1,6 @@
 from django.urls import include, path
 from rest_framework import routers
+
 from users.views import FollowViewSet, UserViewSet, obtain_token, revoke_token
 
 app_name = 'users'

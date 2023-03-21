@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.token_blacklist.models import (BlacklistedToken,
                                                              OutstandingToken)
 from rest_framework_simplejwt.tokens import RefreshToken
+
 from users.models import CustomUser, Follow
 from users.serializers import (AuthorSerializer, FollowSerializer,
                                ObtainTokenSerializer, SetPasswordSerializer,

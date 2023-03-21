@@ -1,23 +1,22 @@
 from django.http import HttpResponse
-from recipes.models import (Favorite, Ingredient, IngredientsPerRecipe, Recipe,
-                            ShoppingCart, Tag)
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
-from users.serializers import SimpleRecipeSerializer
-from users.views import LimitPageNumberPagination
 
 from .permissions import IsAdminOrOwner
 from .serializers import (IngredientSerializer, RecipeGetSerializer,
                           RecipePostSerializer, TagSerializer)
+from recipes.models import (Favorite, Ingredient, IngredientsPerRecipe, Recipe,
+                            ShoppingCart, Tag)
+from users.serializers import SimpleRecipeSerializer
+from users.views import LimitPageNumberPagination
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """Вьюсет для модели Recipe."""
     queryset = Recipe.objects.all()
-    permission_classes = [IsAuthenticatedOrReadOnly, ]
     pagination_class = LimitPageNumberPagination
 
     def get_serializer_class(self):
@@ -35,8 +34,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['update', 'destroy']:
-            return [IsAuthenticated, IsAdminOrOwner]
-        return super().get_permissions()
+            return [IsAuthenticated(), IsAdminOrOwner()]
+        return [IsAuthenticatedOrReadOnly(), ]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -50,6 +49,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     user=self.request.user
                 ).values_list('recipe_id', flat=True)
                 queryset = Recipe.objects.filter(id__in=qs)
+            elif self.request.query_params.get('author'):
+                queryset = Recipe.objects.filter(
+                    author_id=self.request.query_params.get('author')
+                )
             else:
                 queryset = Recipe.objects.all()
         else:
@@ -77,7 +80,7 @@ class IngredientViewSet(
     """Вьюсет для модели Ingredient."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    filter_backends = (filters.SearchFilter,)
+    filter_backends = (filters.SearchFilter, )
     search_fields = ('^name', )
     permission_classes = [AllowAny, ]
 
@@ -109,14 +112,11 @@ class FavoriteViewSet(
         )
 
     def destroy(self, request, *args, **kwargs):
-        try:
-            instance = Favorite.objects.get(
-                recipe_id=self.kwargs.get('recipe_id'), user=request.user
-            )
-            self.perform_destroy(instance)
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except:
-            print('No favorite object')
+        instance = Favorite.objects.filter(
+            recipe_id=self.kwargs.get('recipe_id'), user=request.user
+        )[0]
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ShoppingCartViewSet(
@@ -130,7 +130,14 @@ class ShoppingCartViewSet(
         ShoppingCart.objects.get_or_create(
             recipe_id=self.kwargs.get('recipe_id'), user=request.user
         )
-        instance = Recipe.objects.get(id=self.kwargs.get('recipe_id'))
+        qs = Recipe.objects.filter(
+            id=self.kwargs.get('recipe_id')
+        )
+        if not qs.exists():
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        instance = qs[0]
         data = {
             'id': instance.pk,
             'name': instance.name,
@@ -146,14 +153,11 @@ class ShoppingCartViewSet(
         )
 
     def destroy(self, request, *args, **kwargs):
-        try:
-            instance = ShoppingCart.objects.get(
-                recipe_id=self.kwargs.get('recipe_id'), user=request.user
-            )
-            self.perform_destroy(instance)
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except:
-            print('No shopping cart object')
+        instance = ShoppingCart.objects.filter(
+            recipe_id=self.kwargs.get('recipe_id'), user=request.user
+        )[0]
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view()

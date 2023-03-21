@@ -3,9 +3,7 @@ services:
 
   frontend:
     container_name: frontend_react
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: jackdev23/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
   
@@ -34,8 +32,8 @@ services:
 
   backend:
     container_name: backend_api
-    build:
-      context: ../backend
+    image: jackdev23/foodgram_backend:latest
+    pull_policy: always
     volumes:
       - static_value:/app/static/
       - media_value:/app/images/ 

@@ -26,12 +26,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '8g3)9^qkt&h6&i$xx0hmhk5j92*zzh4!*vpjm^mjxq#(*u@y3('
+
+SECRET_KEY = os.getenv('SECRET_KEY', default='None')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'backend']
+DEBUG = os.getenv('DEBUG', default='False') == 'True'
+
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default='*').split()
 
 
 # Application definition
@@ -119,6 +121,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 REST_FRAMEWORK = {
+    'SEARCH_PARAM': 'name',
+
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
@@ -163,5 +167,5 @@ AUTH_USER_MODEL = 'users.CustomUser'
 # CORS_ORIGIN_ALLOW_ALL = True
 CORS_URLS_REGEX = r'^/api/.*$'
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
+    'http://158.160.29.211:3000',
 ]

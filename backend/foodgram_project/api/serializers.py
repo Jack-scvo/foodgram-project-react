@@ -1,9 +1,9 @@
-from recipes.models import (Favorite, Ingredient, IngredientsPerRecipe, Recipe,
-                            ShoppingCart, Tag)
 from rest_framework import serializers
-from users.serializers import AuthorSerializer
 
 from .common import Base64ImageField
+from recipes.models import (Favorite, Ingredient, IngredientsPerRecipe, Recipe,
+                            ShoppingCart, Tag)
+from users.serializers import AuthorSerializer
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -54,14 +54,16 @@ class RecipeGetSerializer(serializers.ModelSerializer):
         model = Recipe
 
     def get_is_favorited(self, obj):
-        return Favorite.objects.filter(
-            recipe_id=obj.id, user=self.context['request_user']
-        ).exists()
+        if self.context['request_user'].is_authenticated:
+            return Favorite.objects.filter(
+                recipe_id=obj.id, user=self.context['request_user']
+            ).exists()
 
     def get_is_in_shopping_cart(self, obj):
-        return ShoppingCart.objects.filter(
-            recipe_id=obj.id, user=self.context['request_user']
-        ).exists()
+        if self.context['request_user'].is_authenticated:
+            return ShoppingCart.objects.filter(
+                recipe_id=obj.id, user=self.context['request_user']
+            ).exists()
 
     def to_representation(self, value):
         self.context['recipe_id'] = value.id
@@ -107,8 +109,6 @@ class RecipePostSerializer(serializers.ModelSerializer):
         instance.tags.set(validated_data.get('tags', instance.tags))
         ing_data = self.initial_data.get('ingredients', instance.ingredients)
         ing_list = []
-        # здесь все-таки нужен delete,
-        # иначе мешанина из ингредиентов получается
         IngredientsPerRecipe.objects.filter(
             recipe_id=instance.id,
         ).delete()

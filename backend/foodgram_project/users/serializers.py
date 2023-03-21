@@ -1,7 +1,8 @@
-from api.common import Base64ImageField
-from recipes.models import Recipe
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+
+from api.common import Base64ImageField
+from recipes.models import Recipe
 from users.models import CustomUser, Follow
 
 
@@ -16,7 +17,8 @@ class AuthorSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def get_is_subscribed(self, obj):
-        if self.context['request_user']:
+        if (self.context['request_user'] and 
+            self.context['request_user'].is_authenticated):
             user = self.context['request_user']
         else:
             return False
