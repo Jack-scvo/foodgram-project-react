@@ -3,7 +3,7 @@ services:
 
   frontend:
     container_name: frontend_react
-    image: jackdev23/foodgram_frontend:latest
+    image: jackdev23/foodgram_frontend:v0.03.2023
     volumes:
       - front_value:/app/result_build/
   
