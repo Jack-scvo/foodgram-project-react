@@ -17,15 +17,17 @@ class AuthorSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def get_is_subscribed(self, obj):
-        if (self.context['request_user'] and 
-            self.context['request_user'].is_authenticated):
+        if (
+            self.context[
+                'request_user'
+            ] and self.context['request_user'].is_authenticated
+        ):
             user = self.context['request_user']
         else:
             return False
         if obj != user:
             return Follow.objects.filter(user=user, author=obj).exists()
-        else:
-            return False
+        return False
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -71,8 +73,7 @@ class LimitListSerializer(serializers.ListSerializer):
         data = super().to_representation(data)
         if self.context.get('recipes_limit'):
             limit = int(self.context.get('recipes_limit'))
-            data = data[:limit]
-        return data
+        return data[:limit]
 
 
 class SimpleRecipeSerializer(serializers.ModelSerializer):
@@ -113,8 +114,7 @@ class FollowSerializer(serializers.ModelSerializer):
         user = self.context['request_user']
         if obj != user:
             return Follow.objects.filter(user=user, author=obj).exists()
-        else:
-            return False
+        return False
 
     def save(self, **kwargs):
         user_id = kwargs.get('user_id')

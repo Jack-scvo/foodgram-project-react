@@ -107,10 +107,9 @@ class FollowViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin,
 
     def get_queryset(self):
         qs = self.request.user.follower.values_list('author_id', flat=True)
-        authors = CustomUser.objects.annotate(
+        return CustomUser.objects.annotate(
             recipes_count=Count('recipes')
         ).filter(id__in=qs)
-        return authors
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

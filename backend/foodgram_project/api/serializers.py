@@ -58,12 +58,14 @@ class RecipeGetSerializer(serializers.ModelSerializer):
             return Favorite.objects.filter(
                 recipe_id=obj.id, user=self.context['request_user']
             ).exists()
+        return False
 
     def get_is_in_shopping_cart(self, obj):
         if self.context['request_user'].is_authenticated:
             return ShoppingCart.objects.filter(
                 recipe_id=obj.id, user=self.context['request_user']
             ).exists()
+        return False
 
     def to_representation(self, value):
         self.context['recipe_id'] = value.id
