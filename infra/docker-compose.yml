@@ -8,7 +8,7 @@ services:
       - front_value:/app/result_build/
   
   nginx:
-    container_name: server_ngnix
+    container_name: server_ngnix_f
     image: nginx:1.19.3
     ports:
       - "80:80"
@@ -23,7 +23,7 @@ services:
       - frontend
 
   db:
-    container_name: database
+    container_name: database_f
     image: postgres:13.0-alpine
     volumes:
       - /var/lib/postgresql/data/

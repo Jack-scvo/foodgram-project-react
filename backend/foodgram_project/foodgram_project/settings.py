@@ -167,5 +167,5 @@ AUTH_USER_MODEL = 'users.CustomUser'
 # CORS_ORIGIN_ALLOW_ALL = True
 CORS_URLS_REGEX = r'^/api/.*$'
 CORS_ALLOWED_ORIGINS = [
-    'http://158.160.29.211:3000',
+    'http://127.0.0.1:3000',
 ]
