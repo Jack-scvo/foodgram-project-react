@@ -14,7 +14,7 @@ services:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - front_value:/usr/share/nginx/html/
+      - /var/lib/docker/volumes/foodgram_front_value/_data/build:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
       - static_value:/var/html/static/
       - media_value:/var/html/images/
