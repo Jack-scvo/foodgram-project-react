@@ -60,7 +60,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.request.query_params.get('tags'):
             tags = []
             tags = self.request.query_params.getlist('tags')
-            queryset = queryset.filter(tags__slug__in=tags)
+            queryset = queryset.filter(tags__slug__in=tags).distinct()
         return queryset
 
 
