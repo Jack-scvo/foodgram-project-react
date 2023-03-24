@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 
 from .common import Base64ImageField
 from recipes.models import (Favorite, Ingredient, IngredientsPerRecipe, Recipe,
