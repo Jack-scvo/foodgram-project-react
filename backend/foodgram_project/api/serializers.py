@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
 from .common import Base64ImageField
 from recipes.models import (Favorite, Ingredient, IngredientsPerRecipe, Recipe,
@@ -100,6 +101,13 @@ class RecipePostSerializer(serializers.ModelSerializer):
             'name', 'text', 'cooking_time', 'author'
         )
         model = Recipe
+        validators = [
+            UniqueTogetherValidator(
+                queryset=IngredientsPerRecipe.objects.all(),
+                fields=['recipe', 'ingredient'],
+                message='Ингредиент должен быть уникален'
+            )
+        ]
 
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
