@@ -86,6 +86,7 @@ class IngredientsPerRecipe(models.Model):
 
     class Meta:
         ordering = ('recipe', 'ingredient', )
+        unique_together = ('recipe', 'ingredient', )
 
     def __str__(self):
         return f'{self.recipe} - {self.ingredient}'

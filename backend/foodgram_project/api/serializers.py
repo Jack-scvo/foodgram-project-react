@@ -101,13 +101,6 @@ class RecipePostSerializer(serializers.ModelSerializer):
             'name', 'text', 'cooking_time', 'author'
         )
         model = Recipe
-        validators = [
-            UniqueTogetherValidator(
-                queryset=IngredientsPerRecipe.objects.all(),
-                fields=['recipe', 'ingredient'],
-                message='Ингредиент должен быть уникален'
-            )
-        ]
 
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
