@@ -145,3 +145,11 @@ class RecipePostSerializer(serializers.ModelSerializer):
     def to_representation(self, value):
         self.context['recipe_id'] = value.id
         return super().to_representation(value)
+
+    def validate(self, attrs):
+        ing_data = self.initial_data.get('ingredients')
+        for data in ing_data:
+            if data['amount'] < 1 or data['amount'] > 10000:
+                raise serializers.ValidationError(
+                    'Количество должно быть в диапазоне от 1 до 10000!')
+        return attrs
