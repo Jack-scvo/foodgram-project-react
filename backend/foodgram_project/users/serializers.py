@@ -73,7 +73,8 @@ class LimitListSerializer(serializers.ListSerializer):
         data = super().to_representation(data)
         if self.context.get('recipes_limit'):
             limit = int(self.context.get('recipes_limit'))
-        return data[:limit]
+            data = data[:limit]
+        return data
 
 
 class SimpleRecipeSerializer(serializers.ModelSerializer):
